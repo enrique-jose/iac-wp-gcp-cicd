@@ -1,0 +1,10 @@
+gcp_project_id = "cool-academy-489503-f3"
+gcp_region     = "us-east1"
+project_name   = "wp-cicd"
+
+github_connection_name = "github"
+github_owner           = "enrique-jose"
+iac_repo_name          = "iac-wp-gcp-cicd"
+app_repo_name          = "demo-wp"
+
+approvers = ["user:enriquejose@gmail.com"]

@@ -1,0 +1,72 @@
+# Trigger: pull request to main (files under infra/**)
+# fmt -> init -> validate -> tflint -> trivy (informative) -> plan
+# The plan is uploaded to gs://<state bucket>/plans/pr-<n>/<sha>/plan.txt
+# and the build result shows up as a check on the GitHub PR.
+substitutions:
+  _TF_VERSION: "1.16.6"
+  _STATE_BUCKET: ""
+  _TFVARS: env/prod.tfvars
+  _DB_SECRET: wp-cicd-tf-db-password
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
+  env:
+    - TF_IN_AUTOMATION=1
+    - TF_INPUT=0
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/${_DB_SECRET}/versions/latest
+      env: TF_VAR_db_password
+
+steps:
+  - id: fmt
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["fmt", "-check", "-recursive", "-diff"]
+
+  - id: init
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["init", "-input=false"]
+
+  - id: validate
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["validate"]
+
+  - id: tflint
+    name: ghcr.io/terraform-linters/tflint:v0.53.0
+    dir: infra
+    entrypoint: sh
+    args: ["-c", "tflint --init && tflint --recursive --config=$$(pwd)/.tflint.hcl"]
+    waitFor: ["init"]
+
+  - id: trivy
+    name: aquasec/trivy:0.56.2
+    args: ["config", "--exit-code", "0", "--severity", "HIGH,CRITICAL", "infra"]
+    allowFailure: true
+    waitFor: ["-"]
+
+  - id: plan
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    entrypoint: sh
+    secretEnv: ["TF_VAR_db_password"]
+    # -lock=false: a PR plan must never block an apply running on main
+    args:
+      - -c
+      - |
+        set -e
+        terraform plan -var-file=${_TFVARS} -lock=false -out=tfplan
+        terraform show -no-color tfplan > plan.txt
+        echo "=== Resumen ==="; grep -E "^(Plan:|No changes)" plan.txt || true
+    waitFor: ["validate", "tflint"]
+
+artifacts:
+  objects:
+    location: gs://${_STATE_BUCKET}/plans/pr-${_PR_NUMBER}/${SHORT_SHA}/
+    paths: ["infra/plan.txt"]
+
+timeout: 1800s

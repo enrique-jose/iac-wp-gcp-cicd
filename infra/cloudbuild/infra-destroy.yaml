@@ -1,0 +1,45 @@
+# Trigger: MANUAL only, requires approval. Destroys the whole stack.
+#   gcloud builds triggers run wp-cicd-infra-destroy --region us-east1 \
+#     --branch main --substitutions _CONFIRM=destroy
+# Uses the gcloud image because the destroy provisioner of the public subnet calls
+# gcloud while waiting (1-2 h) for Cloud Run to release its serverless IPs.
+substitutions:
+  _TF_VERSION: "1.16.6"
+  _STATE_BUCKET: ""
+  _TFVARS: env/prod.tfvars
+  _DB_SECRET: wp-cicd-tf-db-password
+  _CONFIRM: ""
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
+  env:
+    - TF_IN_AUTOMATION=1
+    - TF_INPUT=0
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/${_DB_SECRET}/versions/latest
+      env: TF_VAR_db_password
+
+steps:
+  - id: destroy
+    name: gcr.io/google.com/cloudsdktool/google-cloud-cli:slim
+    dir: infra
+    entrypoint: bash
+    secretEnv: ["TF_VAR_db_password"]
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        if [ "${_CONFIRM}" != "destroy" ]; then
+          echo "Refusing to destroy: run the trigger with _CONFIRM=destroy" >&2
+          exit 1
+        fi
+        apt-get -qq update && apt-get -qq install -y unzip > /dev/null
+        curl -fsSL -o /tmp/tf.zip "https://releases.hashicorp.com/terraform/${_TF_VERSION}/terraform_${_TF_VERSION}_linux_amd64.zip"
+        unzip -q /tmp/tf.zip -d /usr/local/bin
+        terraform init -input=false
+        terraform destroy -var-file=${_TFVARS} -lock-timeout=5m -auto-approve
+
+timeout: 14400s
