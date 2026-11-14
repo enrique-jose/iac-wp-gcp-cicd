@@ -153,12 +153,14 @@ resource "google_cloud_run_v2_service" "main" {
   }
 
   # The image (and the client that deployed it) is owned by the demo-wp Cloud Build
-  # pipeline (gcloud run services update). Terraform only creates the service.
+  # pipeline (gcloud run services update), and so is traffic (its smoke test can roll
+  # back to the previous revision). Terraform only creates the service.
   lifecycle {
     ignore_changes = [
       template[0].containers[0].image,
       client,
       client_version,
+      traffic,
     ]
   }
 
