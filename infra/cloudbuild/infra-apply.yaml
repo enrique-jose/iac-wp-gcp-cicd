@@ -1,0 +1,51 @@
+# Trigger: push to main (files under infra/**). Requires manual approval
+# (Cloud Build > History > Approve, or `gcloud builds approve <id> --region us-east1`).
+# Re-plans against main (the PR plan may be stale) and applies that exact plan.
+substitutions:
+  _TF_VERSION: "1.16.6"
+  _STATE_BUCKET: ""
+  _TFVARS: env/prod.tfvars
+  _DB_SECRET: wp-cicd-tf-db-password
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
+  env:
+    - TF_IN_AUTOMATION=1
+    - TF_INPUT=0
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/${_DB_SECRET}/versions/latest
+      env: TF_VAR_db_password
+
+steps:
+  - id: init
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["init", "-input=false"]
+
+  - id: validate
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["validate"]
+
+  - id: plan
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    secretEnv: ["TF_VAR_db_password"]
+    args: ["plan", "-var-file=${_TFVARS}", "-lock-timeout=5m", "-out=tfplan"]
+
+  - id: apply
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    secretEnv: ["TF_VAR_db_password"]
+    args: ["apply", "-lock-timeout=5m", "-auto-approve", "tfplan"]
+
+  - id: outputs
+    name: hashicorp/terraform:${_TF_VERSION}
+    dir: infra
+    args: ["output"]
+
+# The first apply creates Cloud SQL + Valkey (~20-30 min)
+timeout: 3600s
