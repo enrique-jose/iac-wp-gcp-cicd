@@ -7,4 +7,4 @@ github_owner           = "enrique-jose"
 iac_repo_name          = "iac-wp-gcp-cicd"
 app_repo_name          = "demo-wp"
 
-approvers = ["user:enriquejose@gmail.com"]
+approvers = ["user:egonzalez@sequentia.co"]
