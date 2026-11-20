@@ -310,7 +310,7 @@ locals {
 resource "google_monitoring_dashboard" "main" {
   dashboard_json = jsonencode({
     displayName = "${var.project_name} · WordPress"
-    labels      = { wordpress = "", "${var.project_name}" = "" }
+    labels      = { wordpress = "", (var.project_name) = "" }
     mosaicLayout = {
       columns = 48
       tiles   = local.tiles
