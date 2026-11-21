@@ -154,7 +154,7 @@ locals {
             }
           }
         }]
-        thresholds = [for t in v.thresholds : { value = t, color = "RED", direction = "ABOVE", targetAxis = "Y1" }]
+        thresholds = [for t in v.thresholds : { value = t, targetAxis = "Y1" }]
         yAxis      = { label = v.label, scale = "LINEAR" }
       }
     }
@@ -170,7 +170,7 @@ locals {
           targetAxis      = "Y1"
           timeSeriesQuery = { prometheusQuery = "sum(rate(loadbalancing_googleapis_com:https_request_count{${local.pq_lb},response_code_class=\"500\"}[5m])) / sum(rate(loadbalancing_googleapis_com:https_request_count{${local.pq_lb}}[5m]))" }
         }]
-        thresholds = [{ value = var.lb_5xx_ratio_threshold, color = "RED", direction = "ABOVE", targetAxis = "Y1" }]
+        thresholds = [{ value = var.lb_5xx_ratio_threshold, targetAxis = "Y1" }]
         yAxis      = { label = "ratio", scale = "LINEAR" }
       }
     }
@@ -182,7 +182,7 @@ locals {
           targetAxis      = "Y1"
           timeSeriesQuery = { prometheusQuery = "sum(rate(memorystore_googleapis_com:instance_stats_total_keyspace_hits_count{${local.pq_valkey}}[5m])) / (sum(rate(memorystore_googleapis_com:instance_stats_total_keyspace_hits_count{${local.pq_valkey}}[5m])) + sum(rate(memorystore_googleapis_com:instance_stats_total_keyspace_misses_count{${local.pq_valkey}}[5m])))" }
         }]
-        thresholds = [{ value = var.valkey_hit_ratio_threshold, color = "YELLOW", direction = "BELOW", targetAxis = "Y1" }]
+        thresholds = [{ value = var.valkey_hit_ratio_threshold, targetAxis = "Y1" }]
         yAxis      = { label = "ratio", scale = "LINEAR" }
       }
     }
