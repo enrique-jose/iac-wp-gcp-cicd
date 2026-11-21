@@ -5,13 +5,14 @@
 | SA | La usa | Roles |
 |---|---|---|
 | `wp-cicd-tf` | Triggers `infra-plan`, `infra-apply` e `infra-destroy` | Proyecto: `compute.admin`, `cloudsql.admin`, `memorystore.admin`, `networkconnectivity.admin`, `servicenetworking.networksAdmin`, `run.admin`, `iam.serviceAccountAdmin`, `iam.serviceAccountUser`, `resourcemanager.projectIamAdmin`, `secretmanager.admin`, `serviceusage.serviceUsageAdmin`, `monitoring.editor`, `logging.configWriter` y `logging.logWriter`. **Bucket de estado:** `storage.objectAdmin`. **Secret** `wp-cicd-tf-db-password`: `secretAccessor` |
-| `wp-cicd-app` | Triggers `app-pr` y `app-deploy` | `run.developer`, `logging.logWriter` y `compute.viewer` (para leer la IP del LB). **AR** `wp-cicd`: `artifactregistry.writer`. `iam.serviceAccountUser` **condicionado** a `wp-cicd-run` |
+| `wp-cicd-app` | Triggers `app-pr` y `app-deploy` | `run.developer`, `logging.logWriter` y `compute.viewer` (para leer la IP del LB). **AR** `wp-cicd`: `artifactregistry.writer`. `iam.serviceAccountUser` **solo sobre el SA `wp-cicd-run`** (binding a nivel de SA, en `infra/modules/cloudrun`, variable `app_deployer_service_account`) |
 | `wp-cicd-run` | Runtime de Cloud Run (WordPress) | `cloudsql.client`, `logging.logWriter`, `monitoring.metricWriter` y `artifactregistry.reader`. **Secret** `wp-cicd-db-password`: `secretAccessor` |
 
 Separación de privilegios:
 - El pipeline de la app **no puede** cambiar la infraestructura, el IAM ni los secretos. Solo puede publicar imágenes y crear revisiones de un servicio que ya existe.
 - El SA de Terraform tiene permisos amplios (incluido `projectIamAdmin`), porque gestiona el IAM del stack. Por eso **cada apply requiere aprobación humana**.
 - Los SAs del CI/CD se crean en `bootstrap/`, fuera del alcance de `infra`. Así un apply no puede quitarse sus propios permisos.
+- El permiso `actAs` del deployer se da **sobre el propio SA `wp-cicd-run`** (`google_service_account_iam_member`), no con un binding condicional a nivel de proyecto: las condiciones IAM sobre `resource.name` no se evalúan para `iam.serviceAccounts.actAs`, y el primer `app-deploy` falló por eso.
 
 ## Aprobaciones y acceso humano
 

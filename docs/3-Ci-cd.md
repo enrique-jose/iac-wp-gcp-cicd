@@ -137,5 +137,6 @@ Para la infra, haz revert del commit en `main` (con un PR), haz merge y aprueba 
 | `tflint` falla con `terraform_required_version` / `required_providers` | Cada módulo necesita su `versions.tf` |
 | `NOT_FOUND: connections/github` en el bootstrap | La conexión de GitHub no existe todavía o tiene otro nombre o región |
 | `allowedPolicyMemberDomains` al añadir aprobadores | Solo se admiten cuentas de la organización |
+| `app-deploy` falla con `iam.serviceaccounts.actAs denied` | `wp-cicd-app` no puede actuar como `wp-cicd-run`. Comprueba que `app_deployer_service_account` está en `env/prod.tfvars` y que el apply de infra se ejecutó (crea el binding `serviceAccountUser` sobre el SA) |
 | `app-deploy` falla con `Service not found` | Se hizo merge en `demo-wp` antes del primer `infra-apply`. Relánzalo con `gcloud builds triggers run wp-cicd-app-deploy --region us-east1 --branch main` |
 | `Error acquiring the state lock` | Hay otro apply en curso. Espera, o si el build murió, ejecuta `terraform force-unlock <LOCK_ID>` en local |
