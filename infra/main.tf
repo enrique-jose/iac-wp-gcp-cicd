@@ -89,6 +89,7 @@ module "cloudrun" {
   vpc_egress      = var.vpc_egress
 
   wordpress_image    = var.wordpress_image
+  deployer_members   = ["serviceAccount:${var.app_deployer_service_account}"]
   min_instance_count = var.run_min_instances
   max_instance_count = var.run_max_instances
 

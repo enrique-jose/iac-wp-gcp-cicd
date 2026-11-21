@@ -137,26 +137,32 @@ locals {
       }
       } : k => {
       title = v.title
-      xyChart = {
-        chartOptions = { mode = "COLOR" }
-        dataSets = [{
-          plotType   = "LINE"
-          targetAxis = "Y1"
-          timeSeriesQuery = {
-            timeSeriesFilter = {
-              filter = v.filter
-              aggregation = {
-                alignmentPeriod    = "60s"
-                perSeriesAligner   = v.aligner
-                crossSeriesReducer = v.reducer
-                groupByFields      = v.group_by
+      # Empty lists / zero values are omitted: the API strips them and Terraform
+      # would otherwise report a diff on every plan.
+      xyChart = merge(
+        {
+          chartOptions = { mode = "COLOR" }
+          dataSets = [{
+            plotType   = "LINE"
+            targetAxis = "Y1"
+            timeSeriesQuery = {
+              timeSeriesFilter = {
+                filter = v.filter
+                aggregation = merge(
+                  {
+                    alignmentPeriod    = "60s"
+                    perSeriesAligner   = v.aligner
+                    crossSeriesReducer = v.reducer
+                  },
+                  length(v.group_by) > 0 ? { groupByFields = v.group_by } : {}
+                )
               }
             }
-          }
-        }]
-        thresholds = [for t in v.thresholds : { value = t, targetAxis = "Y1" }]
-        yAxis      = { label = v.label, scale = "LINEAR" }
-      }
+          }]
+          yAxis = { label = v.label, scale = "LINEAR" }
+        },
+        length(v.thresholds) > 0 ? { thresholds = [for t in v.thresholds : { value = t, targetAxis = "Y1" }] } : {}
+      )
     }
   }
 
@@ -287,21 +293,24 @@ locals {
 
   tiles = flatten([
     for i, s in local.sections : concat(
-      [{
-        xPos   = 0
-        yPos   = local.section_offsets[i]
-        width  = 48
-        height = local.section_heights[i]
-        widget = { title = s.title, collapsibleGroup = { collapsed = false } }
-      }],
+      [merge(
+        {
+          width  = 48
+          height = local.section_heights[i]
+          widget = { title = s.title, collapsibleGroup = {} }
+        },
+        local.section_offsets[i] > 0 ? { yPos = local.section_offsets[i] } : {}
+      )],
       [
-        for j, name in s.widgets : {
-          xPos   = (j % floor(48 / s.tile_w)) * s.tile_w
-          yPos   = local.section_offsets[i] + floor(j / floor(48 / s.tile_w)) * s.tile_h
-          width  = s.tile_w
-          height = s.tile_h
-          widget = local.w[name]
-        }
+        for j, name in s.widgets : merge(
+          {
+            width  = s.tile_w
+            height = s.tile_h
+            widget = local.w[name]
+          },
+          (j % floor(48 / s.tile_w)) > 0 ? { xPos = (j % floor(48 / s.tile_w)) * s.tile_w } : {},
+          (local.section_offsets[i] + floor(j / floor(48 / s.tile_w)) * s.tile_h) > 0 ? { yPos = local.section_offsets[i] + floor(j / floor(48 / s.tile_w)) * s.tile_h } : {}
+        )
       ]
     )
   ])

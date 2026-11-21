@@ -23,5 +23,8 @@ cache_replica_count = 0
 run_min_instances = 1
 run_max_instances = 3
 
+# Created by bootstrap; deploys new Cloud Run revisions from demo-wp
+app_deployer_service_account = "wp-cicd-app@cool-academy-489503-f3.iam.gserviceaccount.com"
+
 alert_emails             = ["enriquejose@gmail.com"]
 alert_run_latency_p95_ms = 2000
