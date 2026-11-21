@@ -19,7 +19,7 @@ Se organiza en grupos plegables:
 | **Bases de datos · Cloud SQL logs** | Logs de Cloud SQL con severidad WARNING o superior |
 | **Bases de datos · Valkey** | Hit ratio (PromQL), memoria, CPU, clientes conectados, claves totales y claves expulsadas y expiradas por segundo |
 
-Las líneas rojas de los gráficos son los mismos umbrales que usan las alertas.
+Las líneas de umbral de los gráficos (y el color rojo de los scorecards) son los mismos umbrales que usan las alertas. La API no permite fijar el color de un umbral en un gráfico XY.
 
 ## Señales base
 
