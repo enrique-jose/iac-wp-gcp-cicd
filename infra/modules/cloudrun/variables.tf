@@ -83,3 +83,9 @@ variable "max_instance_count" {
   type        = number
   default     = 3
 }
+
+variable "deployer_members" {
+  description = "Members allowed to deploy revisions as the runtime SA (roles/iam.serviceAccountUser on it)"
+  type        = list(string)
+  default     = []
+}

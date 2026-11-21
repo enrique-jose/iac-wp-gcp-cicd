@@ -49,6 +49,16 @@ resource "google_secret_manager_secret_iam_member" "run" {
   member    = "serviceAccount:${google_service_account.run.email}"
 }
 
+# Deployers (the demo-wp Cloud Build SA) need actAs on the runtime SA to create
+# new revisions. Granted on this SA only, not project-wide.
+resource "google_service_account_iam_member" "deployer" {
+  for_each = toset(var.deployer_members)
+
+  service_account_id = google_service_account.run.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = each.value
+}
+
 # Cloud Run service - equivalent to the AWS ECS cluster + task definition + service
 resource "google_cloud_run_v2_service" "main" {
   name                = "${var.project_name}-service"

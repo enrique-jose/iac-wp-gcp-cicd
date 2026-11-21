@@ -121,3 +121,8 @@ variable "alert_run_latency_p95_ms" {
   type        = number
   default     = 2000
 }
+
+variable "app_deployer_service_account" {
+  description = "Service account of the demo-wp deploy pipeline (created by bootstrap)"
+  type        = string
+}
