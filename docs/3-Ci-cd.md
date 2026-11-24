@@ -97,6 +97,8 @@ gcloud builds triggers run wp-cicd-infra-destroy --region us-east1 \
 
 Se niega a ejecutarse si no recibe `_CONFIRM=destroy`, y además requiere aprobación. Usa la imagen `google-cloud-cli` e instala Terraform en el propio paso, con un timeout de 4 h para cubrir la espera de las IPs serverless.
 
+Desde la consola: *Cloud Build → Triggers → `wp-cicd-infra-destroy` → Run*. El formulario ya muestra la variable `_CONFIRM` con el valor `no`; cámbialo por `destroy`. Con cualquier otro valor, el build termina en FAILURE con `Refusing to destroy` sin tocar nada.
+
 ## Pipeline de la aplicación (`demo-wp/cloudbuild.yaml`)
 
 | Paso | En PR | En main |
