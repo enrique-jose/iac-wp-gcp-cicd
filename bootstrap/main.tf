@@ -287,9 +287,13 @@ resource "google_cloudbuild_trigger" "infra_apply" {
 resource "google_cloudbuild_trigger" "infra_destroy" {
   name            = "${var.project_name}-infra-destroy"
   location        = var.gcp_region
-  description     = "Manual: terraform destroy of the whole stack (requires approval)"
+  description     = "Manual: terraform destroy of the whole stack (requires approval). Set _CONFIRM=destroy when running it"
   service_account = google_service_account.tf.id
-  substitutions   = local.infra_substitutions
+
+  # _CONFIRM is declared with a safe default ("no"; an empty value is dropped by the API)
+  # so it shows up in the console's "Run trigger" form: the user only replaces it with
+  # "destroy" there. Any other value makes infra-destroy.yaml refuse to run.
+  substitutions = merge(local.infra_substitutions, { _CONFIRM = "no" })
 
   source_to_build {
     repository = google_cloudbuildv2_repository.iac.id
