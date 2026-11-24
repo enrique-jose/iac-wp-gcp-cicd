@@ -1,6 +1,6 @@
 # Non-secret values for the single (prod) environment.
 # db_password is NOT here: Cloud Build injects it as TF_VAR_db_password from Secret Manager.
-# Pipeline test: comment-only change, expected plan = no changes.
+# Pipeline test (2): comment-only change, expected plan = no changes.
 gcp_project_id = "cool-academy-489503-f3"
 gcp_region     = "us-east1"
 
